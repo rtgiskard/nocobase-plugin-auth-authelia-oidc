@@ -1,8 +1,8 @@
 {
-  "name": "@gskd/plugin-auth-authelia-oidc",
+  "name": "@gskd/plugin-auth-oidc-external",
   "version": "0.1.0",
   "private": true,
-  "description": "Authelia OIDC authentication plugin for NocoBase.",
+  "description": "External OIDC authentication plugin for NocoBase.",
   "license": "UNLICENSED",
   "main": "server.js",
   "types": "server.d.ts",
@@ -16,7 +16,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/server/index.ts src/client-v2/index.tsx --format cjs --dts --splitting false --clean --out-dir dist && node scripts/write-entrypoints.mjs",
+    "build": "tsup && node scripts/write-entrypoints.mjs",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "pack:plugin": "npm run build && npm pack",
@@ -50,7 +50,7 @@
     "vitest": "^4.1.7"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "overrides": {
     "@nocobase/database": "2.0.60"
