@@ -62,7 +62,7 @@ export function registerActions(app: Application, resourceName: string) {
           createdAt: Date.now(),
         });
 
-        ctx.body = { data: { url: request.url.toString() } };
+        ctx.body = { url: request.url.toString() };
         await next();
       },
       async redirect(ctx: Context, next: Next) {

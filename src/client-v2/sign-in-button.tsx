@@ -7,20 +7,20 @@ const buttonContainerStyle: CSSProperties = {
   marginTop: 12,
 };
 
-const signInButtonStyle: CSSProperties = {
-  height: 44,
-  borderRadius: 12,
-  fontWeight: 600,
-  letterSpacing: '0.01em',
-  boxShadow: '0 8px 20px rgba(22, 119, 255, 0.18)',
-};
-
 const hintStyle: CSSProperties = {
   marginTop: 8,
   color: 'rgba(0, 0, 0, 0.45)',
   fontSize: 12,
   lineHeight: 1.5,
   textAlign: 'center',
+};
+
+const signInButtonStyle: CSSProperties = {
+  height: 44,
+  borderRadius: 12,
+  fontWeight: 600,
+  letterSpacing: '0.01em',
+  boxShadow: '0 8px 20px rgba(22, 119, 255, 0.18)',
 };
 
 const DEFAULT_BUTTON_LABEL_EN = 'Continue with OIDC';
@@ -39,6 +39,20 @@ interface SignInButtonProps {
 
 function browserLanguage() {
   return typeof window !== 'undefined' ? window.navigator.language : undefined;
+}
+
+function getAuthorizationUrl(result: unknown): string | undefined {
+  if (typeof result !== 'object' || result === null) return undefined;
+
+  const response = result as {
+    data?: {
+      data?: {
+        url?: unknown;
+      };
+    };
+  };
+  const url = response.data?.data?.url;
+  return typeof url === 'string' ? url : undefined;
 }
 
 function isChineseLanguage(language?: string) {
@@ -73,7 +87,7 @@ export function ExternalOIDCSignInButton(props: SignInButtonProps) {
           redirectTo,
         },
       });
-      const url = result?.data?.data?.url;
+      const url = getAuthorizationUrl(result);
       if (typeof url !== 'string') throw new Error('OIDC authorization URL is missing');
       window.location.assign(url);
     } catch (error) {
