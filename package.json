@@ -1,7 +1,8 @@
 {
-  "name": "@gskd/plugin-auth-oidc-external",
+  "name": "@nocobase/plugin-auth-oidc-external",
   "version": "0.1.0",
   "description": "External OIDC authentication plugin for NocoBase.",
+  "homepage": "https://github.com/rtgiskard/nocobase-plugin-auth-oidc-external",
   "license": "AGPL-3.0-or-later OR LicenseRef-Commercial",
   "main": "server.js",
   "types": "server.d.ts",
@@ -17,7 +18,7 @@
     "COMMERCIAL-LICENSE.md"
   ],
   "scripts": {
-    "build": "tsup && node scripts/write-entrypoints.mjs",
+    "build": "tsup && node scripts/write-entrypoints.mjs && node scripts/build-client-amd.mjs && node scripts/write-external-version.mjs",
     "check": "tsc --noEmit",
     "test": "vitest run",
     "pack:plugin": "npm run build && npm pack",
@@ -27,10 +28,10 @@
     "openid-client": "^6.8.4"
   },
   "peerDependencies": {
-    "@nocobase/auth": "2.0.60",
-    "@nocobase/client": "2.0.60",
-    "@nocobase/plugin-auth": "2.0.60",
-    "@nocobase/server": "2.0.60",
+    "@nocobase/auth": "2.0.x",
+    "@nocobase/client": "2.0.x",
+    "@nocobase/plugin-auth": "2.0.x",
+    "@nocobase/server": "2.0.x",
     "@types/react": "^18.0.0",
     "antd": "^5.0.0",
     "react": "^18.0.0",
