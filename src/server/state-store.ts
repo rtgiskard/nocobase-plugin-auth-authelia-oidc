@@ -1,9 +1,11 @@
 import type { Cache } from '@nocobase/cache';
+import type { Application } from '@nocobase/server';
 import { createHash } from 'node:crypto';
 import type { OIDCStatePayload } from '../shared/types';
 
 const STATE_TTL_MS = 10 * 60 * 1000;
-const STATE_PREFIX = 'auth-authelia-oidc:state:';
+const STATE_PREFIX = 'auth-oidc-external:state:';
+const STATE_LOCK_TTL_MS = 5000;
 
 function key(state: string): string {
   return `${STATE_PREFIX}${createHash('sha256').update(state).digest('hex')}`;
@@ -13,10 +15,15 @@ export async function saveOIDCState(cache: Cache, state: string, payload: OIDCSt
   await cache.set(key(state), payload, STATE_TTL_MS);
 }
 
-export async function consumeOIDCState(cache: Cache, state: string): Promise<OIDCStatePayload> {
-  const stored = await cache.get<OIDCStatePayload>(key(state));
-  await cache.del(key(state));
+async function consumeStoredState(cache: Cache, state: string): Promise<OIDCStatePayload> {
+  const cacheKey = key(state);
+  const stored = await cache.get<OIDCStatePayload>(cacheKey);
+  await cache.del(cacheKey);
   if (!stored) throw new Error('OIDC state is invalid or expired');
   if (Date.now() - stored.createdAt > STATE_TTL_MS) throw new Error('OIDC state is expired');
   return stored;
+}
+
+export async function consumeOIDCState(app: Application, state: string): Promise<OIDCStatePayload> {
+  return app.lockManager.runExclusive(key(state), () => consumeStoredState(app.cache, state), STATE_LOCK_TTL_MS);
 }

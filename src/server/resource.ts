@@ -68,7 +68,7 @@ export function registerActions(app: Application, resourceName: string) {
         const state = queryValue(ctx, 'state');
         if (!state) ctx.throw(400, 'OIDC state is missing');
 
-        const stored = await consumeOIDCState(ctx.app.cache, state);
+        const stored = await consumeOIDCState(ctx.app, state);
         const authenticator = await getAuthenticator(ctx, stored.authenticator);
         const options = normalizeOptions(authenticator.options);
         const callbackUrl = callbackUrlFrom(ctx, options.redirectUri);
@@ -78,7 +78,7 @@ export function registerActions(app: Application, resourceName: string) {
           codeVerifier: stored.codeVerifier,
         });
 
-        ctx.state.autheliaOIDCClaims = result.claims;
+        ctx.state.externalOIDCClaims = result.claims;
         ctx.auth = await ctx.app.authManager.get(stored.authenticator, ctx);
         const authResponse = await ctx.auth.signIn() as AuthResponse;
         ctx.redirect(buildFrontendCallbackUrl(stored.redirectTo, stored.authenticator, authResponse.token));
