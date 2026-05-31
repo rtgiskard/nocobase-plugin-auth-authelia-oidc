@@ -1,4 +1,4 @@
-# @gskd/plugin-auth-oidc-external
+# @nocobase/plugin-auth-oidc-external
 
 External OIDC authentication plugin for NocoBase 2.0.60.
 
@@ -68,13 +68,13 @@ Create a NocoBase authenticator with `authType = oidc-external` and options like
 Build and copy the packaged plugin into:
 
 ```text
-/app/nocobase/storage/plugins/@gskd/plugin-auth-oidc-external/
+/app/nocobase/storage/plugins/@nocobase/plugin-auth-oidc-external/
 ```
 
 Enable it inside the NocoBase container:
 
 ```bash
-yarn pm enable @gskd/plugin-auth-oidc-external
+yarn pm enable @nocobase/plugin-auth-oidc-external
 ```
 
 For Kubernetes deployments, use an initContainer to copy the plugin artifact into the NocoBase PVC before the main container starts.
@@ -89,9 +89,9 @@ initContainers:
       - /bin/sh
       - -c
       - |
-        rm -rf /app/nocobase/storage/plugins/@gskd/plugin-auth-oidc-external
-        mkdir -p /app/nocobase/storage/plugins/@gskd
-        cp -a /plugin/@gskd/plugin-auth-oidc-external /app/nocobase/storage/plugins/@gskd/
+        rm -rf /app/nocobase/storage/plugins/@nocobase/plugin-auth-oidc-external
+        mkdir -p /app/nocobase/storage/plugins/@nocobase
+        cp -a /plugin/@nocobase/plugin-auth-oidc-external /app/nocobase/storage/plugins/@nocobase/
     volumeMounts:
       - name: nocobase-data
         mountPath: /app/nocobase/storage
