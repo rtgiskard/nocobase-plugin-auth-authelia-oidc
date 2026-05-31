@@ -1,20 +1,45 @@
 import { BaseAuth, type AuthConfig } from '@nocobase/auth';
 import type { AuthModel } from '@nocobase/plugin-auth';
-import type { AutheliaOIDCOptions } from '../shared/types';
+import type { ExternalOIDCOptions, OIDCClaims } from '../shared/types';
+import { normalizeOptions } from './options';
 
-export class AutheliaOIDCAuth extends BaseAuth {
+const USERNAME_PATTERN = /^[^@<>"'/]{1,50}$/;
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function claimString(claims: OIDCClaims, name: string): string | undefined {
+  return optionalString(claims[name]);
+}
+
+export function usernameFromClaims(claims: OIDCClaims, options: ExternalOIDCOptions): string | undefined {
+  const username = claimString(claims, options.usernameClaim);
+  return username && USERNAME_PATTERN.test(username) ? username : undefined;
+}
+
+export function userDataFromClaims(claims: OIDCClaims, options: ExternalOIDCOptions) {
+  const username = usernameFromClaims(claims, options);
+  return {
+    email: claimString(claims, options.emailClaim),
+    nickname: claimString(claims, options.nicknameClaim) ?? username,
+    username,
+  };
+}
+
+export class ExternalOIDCAuth extends BaseAuth {
   constructor(config: AuthConfig) {
     const userCollection = config.ctx.db.getCollection('users');
     super({ ...config, userCollection });
   }
 
   async validate() {
-    const claims = this.ctx.state.autheliaOIDCClaims;
+    const claims = this.ctx.state.externalOIDCClaims;
     if (!claims || typeof claims.sub !== 'string' || typeof claims.iss !== 'string') {
       throw new Error('OIDC claims are missing from request state');
     }
 
-    const options = (this.authenticator?.options || {}) as AutheliaOIDCOptions;
+    const options = normalizeOptions(this.authenticator?.options);
     const authenticator = this.authenticator as AuthModel;
     const uuid = `${claims.iss}:${claims.sub}`;
 
@@ -24,9 +49,6 @@ export class AutheliaOIDCAuth extends BaseAuth {
       return user;
     }
 
-    return authenticator.findOrCreateUser(uuid, {
-      email: typeof claims.email === 'string' ? claims.email : undefined,
-      nickname: typeof claims.name === 'string' ? claims.name : typeof claims.preferred_username === 'string' ? claims.preferred_username : undefined,
-    });
+    return authenticator.findOrCreateUser(uuid, userDataFromClaims(claims, options));
   }
 }

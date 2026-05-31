@@ -1,5 +1,5 @@
 import * as oidc from 'openid-client';
-import type { AutheliaClaims, AutheliaOIDCOptions } from '../shared/types';
+import type { ExternalOIDCOptions, OIDCClaims } from '../shared/types';
 import { getClientSecret } from './options';
 
 export interface AuthorizationRequest {
@@ -10,17 +10,17 @@ export interface AuthorizationRequest {
 }
 
 export interface CallbackResult {
-  claims: AutheliaClaims;
+  claims: OIDCClaims;
 }
 
-function clientAuth(options: AutheliaOIDCOptions): oidc.ClientAuth {
+function clientAuth(options: ExternalOIDCOptions): oidc.ClientAuth {
   const secret = getClientSecret(options);
   return options.tokenEndpointAuthMethod === 'client_secret_basic'
     ? oidc.ClientSecretBasic(secret)
     : oidc.ClientSecretPost(secret);
 }
 
-async function configuration(options: AutheliaOIDCOptions): Promise<oidc.Configuration> {
+async function configuration(options: ExternalOIDCOptions): Promise<oidc.Configuration> {
   return oidc.discovery(
     new URL(options.issuer),
     options.clientId,
@@ -40,11 +40,12 @@ function stringArrayClaim(value: unknown): string[] | undefined {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : undefined;
 }
 
-function claimsFrom(value: Record<string, unknown>, issuer: string): AutheliaClaims {
-  const sub = stringClaim(value.sub);
+function claimsFrom(value: Record<string, unknown>, issuer: string, subject?: string): OIDCClaims {
+  const sub = subject ?? stringClaim(value.sub);
   if (!sub) throw new Error('OIDC subject claim is missing');
   return {
-    iss: stringClaim(value.iss) ?? issuer,
+    ...value,
+    iss: issuer,
     sub,
     email: stringClaim(value.email),
     name: stringClaim(value.name),
@@ -53,7 +54,7 @@ function claimsFrom(value: Record<string, unknown>, issuer: string): AutheliaCla
   };
 }
 
-export async function buildAuthorizationRequest(options: AutheliaOIDCOptions): Promise<AuthorizationRequest> {
+export async function buildAuthorizationRequest(options: ExternalOIDCOptions): Promise<AuthorizationRequest> {
   const config = await configuration(options);
   const state = oidc.randomState();
   const nonce = oidc.randomNonce();
@@ -72,7 +73,7 @@ export async function buildAuthorizationRequest(options: AutheliaOIDCOptions): P
   return { url, state, nonce, codeVerifier };
 }
 
-export async function handleAuthorizationCallback(options: AutheliaOIDCOptions, currentUrl: URL, expected: { state: string; nonce: string; codeVerifier: string }): Promise<CallbackResult> {
+export async function handleAuthorizationCallback(options: ExternalOIDCOptions, currentUrl: URL, expected: { state: string; nonce: string; codeVerifier: string }): Promise<CallbackResult> {
   const config = await configuration(options);
   const tokens = await oidc.authorizationCodeGrant(config, currentUrl, {
     expectedState: expected.state,
@@ -84,9 +85,9 @@ export async function handleAuthorizationCallback(options: AutheliaOIDCOptions, 
   const idTokenClaims = tokens.claims();
   if (!idTokenClaims?.sub) throw new Error('OIDC ID token subject is missing');
   if (typeof tokens.access_token !== 'string' || tokens.access_token.length === 0) {
-    return { claims: claimsFrom(idTokenClaims, options.issuer) };
+    return { claims: claimsFrom(idTokenClaims, options.issuer, idTokenClaims.sub) };
   }
 
   const userInfo = await oidc.fetchUserInfo(config, tokens.access_token, idTokenClaims.sub);
-  return { claims: claimsFrom({ ...idTokenClaims, ...userInfo }, options.issuer) };
+  return { claims: claimsFrom({ ...idTokenClaims, ...userInfo }, options.issuer, idTokenClaims.sub) };
 }
