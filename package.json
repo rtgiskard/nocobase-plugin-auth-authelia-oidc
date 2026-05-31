@@ -1,0 +1,58 @@
+{
+  "name": "@gskd/plugin-auth-authelia-oidc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Authelia OIDC authentication plugin for NocoBase.",
+  "license": "UNLICENSED",
+  "main": "server.js",
+  "types": "server.d.ts",
+  "files": [
+    "client-v2.js",
+    "client-v2.d.ts",
+    "server.js",
+    "server.d.ts",
+    "dist",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/server/index.ts src/client-v2/index.tsx --format cjs --dts --splitting false --clean --out-dir dist && node scripts/write-entrypoints.mjs",
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "pack:plugin": "npm run build && npm pack",
+    "lint:security": "node scripts/security-check.mjs"
+  },
+  "dependencies": {
+    "openid-client": "^6.8.4"
+  },
+  "peerDependencies": {
+    "@nocobase/auth": "2.0.60",
+    "@nocobase/client": "2.0.60",
+    "@nocobase/plugin-auth": "2.0.60",
+    "@nocobase/server": "2.0.60",
+    "@types/react": "^18.0.0",
+    "antd": "^5.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@nocobase/auth": "2.0.60",
+    "@nocobase/client": "2.0.60",
+    "@nocobase/plugin-auth": "2.0.60",
+    "@nocobase/server": "2.0.60",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "antd": "^5.22.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.7"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "@nocobase/database": "2.0.60"
+  }
+}
