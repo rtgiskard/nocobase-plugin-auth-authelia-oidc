@@ -1,3 +1,3 @@
-import PluginAutheliaOIDCClient from './plugin';
+import PluginExternalOIDCClient from './plugin';
 
-export default PluginAutheliaOIDCClient;
+export default PluginExternalOIDCClient;

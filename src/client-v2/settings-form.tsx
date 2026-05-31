@@ -1,7 +1,7 @@
 import { Alert, Form, Input, Switch } from 'antd';
-import { DEFAULT_ISSUER, DEFAULT_SCOPE } from '../shared/constants';
+import { DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
 
-export function AutheliaSettingsForm() {
+export function ExternalOIDCSettingsForm() {
   return (
     <>
       <Alert
@@ -16,13 +16,25 @@ export function AutheliaSettingsForm() {
       <Form.Item name={["options", "clientId"]} label="Client ID" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
-      <Form.Item name={["options", "clientSecretEnv"]} label="Client secret env" initialValue="NOCOBASE_AUTHELIA_OIDC_CLIENT_SECRET">
+      <Form.Item name={["options", "clientSecretEnv"]} label="Client secret env" initialValue="NOCOBASE_OIDC_CLIENT_SECRET">
         <Input />
       </Form.Item>
       <Form.Item name={["options", "redirectUri"]} label="Redirect URI" rules={[{ required: true }]}>
-        <Input placeholder="https://nocobase.example.com/api/authelia-oidc:redirect" />
+        <Input placeholder="https://nocobase.example.com/api/oidc-external:redirect" />
       </Form.Item>
       <Form.Item name={["options", "scope"]} label="Scope" initialValue={DEFAULT_SCOPE} rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+      <Form.Item name={["options", "usernameClaim"]} label="Username claim" initialValue={DEFAULT_USERNAME_CLAIM}>
+        <Input />
+      </Form.Item>
+      <Form.Item name={["options", "nicknameClaim"]} label="Nickname claim" initialValue={DEFAULT_NICKNAME_CLAIM}>
+        <Input />
+      </Form.Item>
+      <Form.Item name={["options", "emailClaim"]} label="Email claim" initialValue={DEFAULT_EMAIL_CLAIM}>
+        <Input />
+      </Form.Item>
+      <Form.Item name={["options", "buttonLabel"]} label="Button label" initialValue={DEFAULT_BUTTON_LABEL}>
         <Input />
       </Form.Item>
       <Form.Item name={["options", "autoSignUp"]} label="Auto sign up" valuePropName="checked" initialValue>

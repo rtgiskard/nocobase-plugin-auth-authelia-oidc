@@ -5,10 +5,13 @@ import { AUTH_RESOURCE, GET_AUTH_URL_ACTION } from '../shared/constants';
 interface SignInButtonProps {
   authenticator?: {
     name?: string;
+    options?: {
+      buttonLabel?: string;
+    };
   };
 }
 
-export function AutheliaSignInButton(props: SignInButtonProps) {
+export function ExternalOIDCSignInButton(props: SignInButtonProps) {
   const api = useAPIClient();
 
   const signIn = async () => {
@@ -24,5 +27,5 @@ export function AutheliaSignInButton(props: SignInButtonProps) {
     window.location.assign(url);
   };
 
-  return <Button onClick={signIn}>Sign in with Authelia</Button>;
+  return <Button onClick={signIn}>{props.authenticator?.options?.buttonLabel ?? 'Sign in with OIDC'}</Button>;
 }
