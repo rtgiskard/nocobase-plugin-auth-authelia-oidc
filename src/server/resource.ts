@@ -9,6 +9,7 @@ import { consumeOIDCState, saveOIDCState } from './state-store';
 interface AuthenticatorRecord {
   name: string;
   authType: string;
+  enabled?: boolean;
   options?: unknown;
 }
 
@@ -33,8 +34,8 @@ function callbackUrlFrom(ctx: Context, redirectUri: string): URL {
   return url;
 }
 
-async function getAuthenticator(ctx: Context, name: string): Promise<AuthenticatorRecord> {
-  const authenticator = await ctx.db.getRepository('authenticators').findOne({ filter: { name } });
+export async function getAuthenticator(ctx: Context, name: string): Promise<AuthenticatorRecord> {
+  const authenticator = await ctx.db.getRepository('authenticators').findOne({ filter: { name, enabled: true } });
   if (!authenticator) ctx.throw(404, 'Authenticator is not found');
   const record = authenticator.toJSON() as AuthenticatorRecord;
   if (record.authType !== AUTH_TYPE) ctx.throw(400, 'Authenticator type is invalid');
