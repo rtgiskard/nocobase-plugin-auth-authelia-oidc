@@ -1,9 +1,8 @@
 {
   "name": "@gskd/plugin-auth-oidc-external",
   "version": "0.1.0",
-  "private": true,
   "description": "External OIDC authentication plugin for NocoBase.",
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-or-later OR LicenseRef-Commercial",
   "main": "server.js",
   "types": "server.d.ts",
   "files": [
@@ -13,7 +12,9 @@
     "server.d.ts",
     "dist",
     "package.json",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "COMMERCIAL-LICENSE.md"
   ],
   "scripts": {
     "build": "tsup && node scripts/write-entrypoints.mjs",

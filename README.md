@@ -138,6 +138,15 @@ clients:
 
 For Authelia file-based users, the login key typically maps to `preferred_username`, and `displayname` maps to `name`. With the default claim mapping, NocoBase stores the login key as `username` when valid and the display name as `nickname`.
 
+## License
+
+This plugin is dual-licensed:
+
+- Community license: GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). See [LICENSE](./LICENSE).
+- Commercial license: available under a separate written agreement. See [COMMERCIAL-LICENSE.md](./COMMERCIAL-LICENSE.md).
+
+You may use, modify, and redistribute the community edition under the AGPL terms. If you need proprietary redistribution, private modifications without AGPL source disclosure obligations, paid support, warranty terms, custom maintenance, or bundled delivery to customers, obtain a commercial license from the project maintainer.
+
 ## Development
 
 ```bash
