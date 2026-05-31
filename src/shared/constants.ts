@@ -1,7 +1,11 @@
-export const AUTH_TYPE = 'authelia-oidc';
-export const AUTH_RESOURCE = 'authelia-oidc';
-export const DEFAULT_AUTHENTICATOR = 'authelia';
+export const AUTH_TYPE = 'oidc-external';
+export const AUTH_RESOURCE = 'oidc-external';
+export const DEFAULT_AUTHENTICATOR = 'oidc';
 export const DEFAULT_SCOPE = 'openid email profile groups';
 export const DEFAULT_ISSUER = 'https://auth.example.com';
+export const DEFAULT_BUTTON_LABEL = 'Sign in with OIDC';
+export const DEFAULT_EMAIL_CLAIM = 'email';
+export const DEFAULT_NICKNAME_CLAIM = 'name';
+export const DEFAULT_USERNAME_CLAIM = 'preferred_username';
 export const CALLBACK_ACTION = 'redirect';
 export const GET_AUTH_URL_ACTION = 'getAuthUrl';

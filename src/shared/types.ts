@@ -1,4 +1,4 @@
-export interface AutheliaOIDCOptions {
+export interface ExternalOIDCOptions {
   issuer: string;
   clientId: string;
   clientSecretEnv?: string;
@@ -7,8 +7,10 @@ export interface AutheliaOIDCOptions {
   scope: string;
   autoSignUp: boolean;
   tokenEndpointAuthMethod?: 'client_secret_post' | 'client_secret_basic';
-  groupsRoleMap?: Record<string, string>;
-  defaultRole?: string;
+  usernameClaim: string;
+  nicknameClaim: string;
+  emailClaim: string;
+  buttonLabel: string;
 }
 
 export interface OIDCStatePayload {
@@ -19,7 +21,7 @@ export interface OIDCStatePayload {
   createdAt: number;
 }
 
-export interface AutheliaClaims {
+export interface OIDCClaims extends Record<string, unknown> {
   iss: string;
   sub: string;
   email?: string;
