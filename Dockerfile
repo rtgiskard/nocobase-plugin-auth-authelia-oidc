@@ -9,7 +9,7 @@ RUN npm ci && npm run build
 
 FROM alpine:3.22
 
-WORKDIR /plugin/@gskd/plugin-auth-authelia-oidc
+WORKDIR /plugin/@gskd/plugin-auth-oidc-external
 COPY --from=build /src/package.json ./package.json
 COPY --from=build /src/README.md ./README.md
 COPY --from=build /src/server.js ./server.js
