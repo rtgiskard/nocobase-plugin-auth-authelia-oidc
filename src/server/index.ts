@@ -1,3 +1,3 @@
-import PluginAutheliaOIDCServer from './plugin';
+import PluginExternalOIDCServer from './plugin';
 
-export default PluginAutheliaOIDCServer;
+export default PluginExternalOIDCServer;

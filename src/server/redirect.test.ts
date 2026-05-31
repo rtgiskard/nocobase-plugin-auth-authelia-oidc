@@ -20,6 +20,6 @@ describe('sanitizeRedirectTo', () => {
 
 describe('buildFrontendCallbackUrl', () => {
   it('adds authenticator and token to local callback URL', () => {
-    expect(buildFrontendCallbackUrl('/admin?tab=users', 'authelia', 'token-value')).toBe('/admin?tab=users&authenticator=authelia&token=token-value');
+    expect(buildFrontendCallbackUrl('/admin?tab=users', 'oidc', 'token-value')).toBe('/admin?tab=users&authenticator=oidc&token=token-value');
   });
 });

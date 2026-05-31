@@ -1,7 +1,7 @@
-import { DEFAULT_ISSUER, DEFAULT_SCOPE } from '../shared/constants';
-import type { AutheliaOIDCOptions } from '../shared/types';
+import { DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
+import type { ExternalOIDCOptions } from '../shared/types';
 
-const DEFAULT_CLIENT_SECRET_ENV = 'NOCOBASE_AUTHELIA_OIDC_CLIENT_SECRET';
+const DEFAULT_CLIENT_SECRET_ENV = 'NOCOBASE_OIDC_CLIENT_SECRET';
 
 function requireString(value: unknown, name: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
@@ -18,7 +18,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export function normalizeOptions(raw: unknown): AutheliaOIDCOptions {
+export function normalizeOptions(raw: unknown): ExternalOIDCOptions {
   const options = isRecord(raw) ? raw : {};
   const issuer = optionalString(options.issuer) ?? DEFAULT_ISSUER;
   const clientId = requireString(options.clientId, 'clientId');
@@ -35,13 +35,15 @@ export function normalizeOptions(raw: unknown): AutheliaOIDCOptions {
     clientSecretEnv,
     clientSecret: optionalString(options.clientSecret),
     autoSignUp: options.autoSignUp !== false,
+    buttonLabel: optionalString(options.buttonLabel) ?? DEFAULT_BUTTON_LABEL,
+    emailClaim: optionalString(options.emailClaim) ?? DEFAULT_EMAIL_CLAIM,
+    nicknameClaim: optionalString(options.nicknameClaim) ?? DEFAULT_NICKNAME_CLAIM,
     tokenEndpointAuthMethod,
-    groupsRoleMap: isRecord(options.groupsRoleMap) ? Object.fromEntries(Object.entries(options.groupsRoleMap).filter(([, value]) => typeof value === 'string')) as Record<string, string> : undefined,
-    defaultRole: optionalString(options.defaultRole),
+    usernameClaim: optionalString(options.usernameClaim) ?? DEFAULT_USERNAME_CLAIM,
   };
 }
 
-export function getClientSecret(options: AutheliaOIDCOptions): string {
+export function getClientSecret(options: ExternalOIDCOptions): string {
   const secretFromEnv = options.clientSecretEnv ? optionalString(process.env[options.clientSecretEnv]) : undefined;
   const secret = secretFromEnv ?? options.clientSecret;
   if (!secret) {
