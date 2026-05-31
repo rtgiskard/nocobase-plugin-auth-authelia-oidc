@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
+import { DEFAULT_BUTTON_HINT, DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
 import type { ExternalOIDCOptions } from '../shared/types';
 import { ExternalOIDCAuth, userDataFromClaims } from './auth';
 
 const options: ExternalOIDCOptions = {
   autoSignUp: true,
+  buttonHint: DEFAULT_BUTTON_HINT,
   buttonLabel: DEFAULT_BUTTON_LABEL,
   clientId: 'client-id',
   clientSecretEnv: 'TEST_OIDC_SECRET',

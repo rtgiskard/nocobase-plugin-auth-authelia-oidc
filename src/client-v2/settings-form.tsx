@@ -1,7 +1,7 @@
 import { SchemaComponent } from '@nocobase/client';
 import { Alert, Input, Switch, type SwitchProps } from 'antd';
 import type { ComponentType } from 'react';
-import { DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
+import { DEFAULT_BUTTON_HINT, DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
 
 interface FormilySwitchProps extends Omit<SwitchProps, 'checked' | 'onChange'> {
   value?: boolean;
@@ -80,6 +80,13 @@ const settingsFormSchema = {
       type: 'string',
       title: 'Button label',
       default: DEFAULT_BUTTON_LABEL,
+      'x-decorator': 'FormItem',
+      'x-component': 'Input',
+    },
+    buttonHint: {
+      type: 'string',
+      title: 'Button hint',
+      default: DEFAULT_BUTTON_HINT,
       'x-decorator': 'FormItem',
       'x-component': 'Input',
     },

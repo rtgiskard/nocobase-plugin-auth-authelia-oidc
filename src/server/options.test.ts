@@ -11,6 +11,7 @@ describe('normalizeOptions', () => {
     expect(options.issuer).toBe('https://auth.example.com');
     expect(options.scope).toBe('openid email profile groups');
     expect(options.autoSignUp).toBe(true);
+    expect(options.buttonHint).toBe('Click to continue through your organization identity provider.');
     expect(options.buttonLabel).toBe('Sign in with OIDC');
     expect(options.emailClaim).toBe('email');
     expect(options.nicknameClaim).toBe('name');
@@ -20,6 +21,7 @@ describe('normalizeOptions', () => {
 
   it('supports custom claim mapping and button label', () => {
     const options = normalizeOptions({
+      buttonHint: 'Click to continue with Example IdP',
       buttonLabel: 'Sign in with Example IdP',
       clientId: 'client-id',
       emailClaim: 'mail',
@@ -28,6 +30,7 @@ describe('normalizeOptions', () => {
       usernameClaim: 'user_name',
     });
 
+    expect(options.buttonHint).toBe('Click to continue with Example IdP');
     expect(options.buttonLabel).toBe('Sign in with Example IdP');
     expect(options.emailClaim).toBe('mail');
     expect(options.nicknameClaim).toBe('display_name');
@@ -51,6 +54,7 @@ describe('getClientSecret', () => {
       redirectUri: 'https://nocobase.example.com/api/oidc-external:redirect',
       scope: 'openid',
       autoSignUp: true,
+      buttonHint: 'Click to continue through your organization identity provider.',
       buttonLabel: 'Sign in with OIDC',
       emailClaim: 'email',
       nicknameClaim: 'name',

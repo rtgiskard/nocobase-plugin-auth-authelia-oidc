@@ -49,7 +49,8 @@ Create a NocoBase authenticator with `authType = oidc-external` and options like
   "usernameClaim": "preferred_username",
   "nicknameClaim": "name",
   "emailClaim": "email",
-  "buttonLabel": "Sign in with OIDC"
+  "buttonLabel": "Sign in with OIDC",
+  "buttonHint": "Click to continue through your organization identity provider."
 }
 ```
 

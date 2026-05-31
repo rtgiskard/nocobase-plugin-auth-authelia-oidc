@@ -4,6 +4,7 @@ export const DEFAULT_AUTHENTICATOR = 'oidc';
 export const DEFAULT_SCOPE = 'openid email profile groups';
 export const DEFAULT_ISSUER = 'https://auth.example.com';
 export const DEFAULT_BUTTON_LABEL = 'Sign in with OIDC';
+export const DEFAULT_BUTTON_HINT = 'Click to continue through your organization identity provider.';
 export const DEFAULT_EMAIL_CLAIM = 'email';
 export const DEFAULT_NICKNAME_CLAIM = 'name';
 export const DEFAULT_USERNAME_CLAIM = 'preferred_username';

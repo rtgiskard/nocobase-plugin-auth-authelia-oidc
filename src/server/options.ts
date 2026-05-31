@@ -1,4 +1,4 @@
-import { DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
+import { DEFAULT_BUTTON_HINT, DEFAULT_BUTTON_LABEL, DEFAULT_EMAIL_CLAIM, DEFAULT_ISSUER, DEFAULT_NICKNAME_CLAIM, DEFAULT_SCOPE, DEFAULT_USERNAME_CLAIM } from '../shared/constants';
 import type { ExternalOIDCOptions } from '../shared/types';
 
 const DEFAULT_CLIENT_SECRET_ENV = 'NOCOBASE_OIDC_CLIENT_SECRET';
@@ -35,6 +35,7 @@ export function normalizeOptions(raw: unknown): ExternalOIDCOptions {
     clientSecretEnv,
     clientSecret: optionalString(options.clientSecret),
     autoSignUp: options.autoSignUp !== false,
+    buttonHint: optionalString(options.buttonHint) ?? DEFAULT_BUTTON_HINT,
     buttonLabel: optionalString(options.buttonLabel) ?? DEFAULT_BUTTON_LABEL,
     emailClaim: optionalString(options.emailClaim) ?? DEFAULT_EMAIL_CLAIM,
     nicknameClaim: optionalString(options.nicknameClaim) ?? DEFAULT_NICKNAME_CLAIM,

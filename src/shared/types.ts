@@ -11,6 +11,7 @@ export interface ExternalOIDCOptions {
   nicknameClaim: string;
   emailClaim: string;
   buttonLabel: string;
+  buttonHint: string;
 }
 
 export interface OIDCStatePayload {
