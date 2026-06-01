@@ -2,6 +2,9 @@ import { useAPIClient } from '@nocobase/client';
 import { App, Button } from 'antd';
 import type { CSSProperties } from 'react';
 import { AUTH_RESOURCE, DEFAULT_BUTTON_HINT, GET_AUTH_URL_ACTION } from '../shared/constants';
+import { removePendingOidcFlow } from './callback';
+import { createAndStorePendingOidcFlow } from './flow-binding';
+import { postSignInRedirectFrom } from './redirect-target';
 
 const buttonContainerStyle: CSSProperties = {
   marginTop: 12,
@@ -79,18 +82,21 @@ export function ExternalOIDCSignInButton(props: SignInButtonProps) {
   const defaults = defaultButtonText(api.auth.locale ?? browserLanguage());
 
   const signIn = async () => {
+    const pending = createAndStorePendingOidcFlow(window.sessionStorage);
     try {
-      const redirectTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const redirectTo = postSignInRedirectFrom(window.location);
       const result = await api.resource(AUTH_RESOURCE)[GET_AUTH_URL_ACTION]({
         values: {
           authenticator: props.authenticator?.name,
           redirectTo,
+          binding: pending.binding,
         },
       });
       const url = getAuthorizationUrl(result);
       if (typeof url !== 'string') throw new Error('OIDC authorization URL is missing');
       window.location.assign(url);
     } catch (error) {
+      removePendingOidcFlow(window.sessionStorage);
       const content = error instanceof Error ? error.message : 'Failed to start OIDC sign-in';
       message.error(content);
     }
