@@ -19,6 +19,16 @@ export interface OIDCStatePayload {
   codeVerifier: string;
   nonce: string;
   redirectTo: string;
+  flowCookieHash: string;
+  clientBindingHash: string;
+  createdAt: number;
+}
+
+export interface OIDCCallbackTicketPayload {
+  authenticator: string;
+  claims: OIDCClaims;
+  flowCookieHash: string;
+  clientBindingHash: string;
   createdAt: number;
 }
 
