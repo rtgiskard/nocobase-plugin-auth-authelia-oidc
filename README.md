@@ -2,7 +2,7 @@
 
 External OIDC authentication plugin for NocoBase 2.0.60.
 
-The plugin implements a standard Authorization Code Flow with PKCE for external OIDC providers. The default claim mapping is compatible with Authelia, and other providers can be used by overriding the claim mapping options.
+The plugin implements a standard Authorization Code Flow with PKCE for external OIDC providers. The default claim mapping uses common OIDC profile claims, and providers with different claim names can be supported by overriding the claim mapping options.
 
 This plugin does not replace NocoBase's official Professional Edition OIDC plugin.
 
@@ -14,24 +14,30 @@ This plugin does not replace NocoBase's official Professional Edition OIDC plugi
 - Never log tokens, authorization codes, state values, nonces, or client secrets.
 - Keep client secrets in Kubernetes Secret-backed environment variables whenever possible.
 - Validate post-login redirects against local relative paths only.
+- Exchange callback completion via short-lived single-use server ticket, never URL tokens.
 - Do not disable TLS verification in production.
 
 ## Implemented Flow
 
 ```text
 SignInButton
+  -> generate 256-bit client binding in sessionStorage
   -> /api/oidc-external:getAuthUrl
+  -> server sets HttpOnly flow cookie and stores hashed binding/cookie in state
   -> external OIDC authorization endpoint
   -> /api/oidc-external:redirect
-  -> state + nonce + PKCE validation
+  -> state + nonce + PKCE + flow-cookie validation
   -> token exchange
   -> userinfo fetch with expected sub
-  -> NocoBase user binding via issuer + sub
-  -> NocoBase JWT sign-in
-  -> local frontend redirect with authenticator + token
+  -> server creates short-lived single-use callback ticket in cache
+  -> server sets HttpOnly ticket cookie
+  -> local frontend redirect with non-secret callback marker only
+  -> client calls /api/oidc-external:exchange with binding
+  -> server validates ticket + flow cookie + binding hashes
+  -> NocoBase user binding via issuer + sub and JWT sign-in JSON response
 ```
 
-The callback only redirects to local relative paths. External redirect targets are ignored to prevent token leakage.
+The callback only redirects to local relative paths and never includes `token`, `authenticator`, OIDC `code/state`, or callback ticket in frontend URLs. External redirect targets are ignored to prevent leakage.
 
 ## Authenticator Options
 
@@ -109,9 +115,9 @@ env:
         key: client-secret
 ```
 
-## Authelia Example
+## Provider Example: Authelia
 
-Authelia is the default tested provider. Use a dedicated OIDC client and expose the claims used by the default mapping:
+Authelia works with a dedicated OIDC client that exposes the common profile claims used by the default mapping:
 
 ```yaml
 claims_policies:

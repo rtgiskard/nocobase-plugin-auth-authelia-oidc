@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getClientSecret, normalizeOptions } from './options';
 
 describe('normalizeOptions', () => {
-  it('defaults to generic OIDC settings with Authelia-compatible claims', () => {
+  it('defaults to generic OIDC settings with common profile claims', () => {
     const options = normalizeOptions({
       clientId: 'client-id',
       redirectUri: 'https://nocobase.example.com/api/oidc-external:redirect',
