@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CALLBACK_MARKER_PARAM, CALLBACK_MARKER_VALUE } from '../shared/constants';
 import { buildFrontendCallbackUrl, sanitizeRedirectTo } from './redirect';
 
 describe('sanitizeRedirectTo', () => {
@@ -19,7 +20,13 @@ describe('sanitizeRedirectTo', () => {
 });
 
 describe('buildFrontendCallbackUrl', () => {
-  it('adds authenticator and token to local callback URL', () => {
-    expect(buildFrontendCallbackUrl('/admin?tab=users', 'oidc', 'token-value')).toBe('/admin?tab=users&authenticator=oidc&token=token-value');
+  it('adds only non-secret callback marker to local callback URL', () => {
+    expect(buildFrontendCallbackUrl('/admin?tab=users')).toBe(`/admin?tab=users&${CALLBACK_MARKER_PARAM}=${CALLBACK_MARKER_VALUE}`);
+  });
+
+  it('strips sensitive callback query params before marker is added', () => {
+    expect(buildFrontendCallbackUrl('/admin?token=x&authenticator=y&code=c&state=s&ticket=t&keep=1')).toBe(
+      `/admin?keep=1&${CALLBACK_MARKER_PARAM}=${CALLBACK_MARKER_VALUE}`,
+    );
   });
 });

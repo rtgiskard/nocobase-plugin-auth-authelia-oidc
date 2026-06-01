@@ -1,4 +1,14 @@
+import { CALLBACK_MARKER_PARAM, CALLBACK_MARKER_VALUE } from '../shared/constants';
+
 const DEFAULT_REDIRECT = '/admin';
+const SENSITIVE_REDIRECT_PARAMS = new Set([
+  'token',
+  'authenticator',
+  'ticket',
+  'code',
+  'state',
+  CALLBACK_MARKER_PARAM,
+]);
 
 export function sanitizeRedirectTo(value: unknown): string {
   if (typeof value !== 'string' || value.length === 0) return DEFAULT_REDIRECT;
@@ -8,9 +18,11 @@ export function sanitizeRedirectTo(value: unknown): string {
   return value;
 }
 
-export function buildFrontendCallbackUrl(redirectTo: string, authenticator: string, token: string): string {
+export function buildFrontendCallbackUrl(redirectTo: string): string {
   const url = new URL(redirectTo, 'https://nocobase.local');
-  url.searchParams.set('authenticator', authenticator);
-  url.searchParams.set('token', token);
+  for (const key of SENSITIVE_REDIRECT_PARAMS) {
+    url.searchParams.delete(key);
+  }
+  url.searchParams.set(CALLBACK_MARKER_PARAM, CALLBACK_MARKER_VALUE);
   return `${url.pathname}${url.search}${url.hash}`;
 }
