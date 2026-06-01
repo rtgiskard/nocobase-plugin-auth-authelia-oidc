@@ -1,5 +1,5 @@
 import { Plugin } from '@nocobase/server';
-import { AUTH_RESOURCE, AUTH_TYPE, CALLBACK_ACTION, GET_AUTH_URL_ACTION } from '../shared/constants';
+import { AUTH_RESOURCE, AUTH_TYPE, CALLBACK_ACTION, EXCHANGE_ACTION, GET_AUTH_URL_ACTION } from '../shared/constants';
 import { ExternalOIDCAuth } from './auth';
 import { registerActions } from './resource';
 
@@ -12,6 +12,7 @@ interface ACLRegistrationApp {
 export function allowPublicOIDCActions(app: ACLRegistrationApp) {
   app.acl.allow(AUTH_RESOURCE, GET_AUTH_URL_ACTION);
   app.acl.allow(AUTH_RESOURCE, CALLBACK_ACTION);
+  app.acl.allow(AUTH_RESOURCE, EXCHANGE_ACTION);
 }
 
 export default class PluginExternalOIDCServer extends Plugin {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUTH_RESOURCE, CALLBACK_ACTION, GET_AUTH_URL_ACTION } from '../shared/constants';
+import { AUTH_RESOURCE, CALLBACK_ACTION, EXCHANGE_ACTION, GET_AUTH_URL_ACTION } from '../shared/constants';
 import { allowPublicOIDCActions } from './plugin';
 
 describe('allowPublicOIDCActions', () => {
@@ -16,6 +16,7 @@ describe('allowPublicOIDCActions', () => {
     expect(calls).toEqual([
       [AUTH_RESOURCE, GET_AUTH_URL_ACTION],
       [AUTH_RESOURCE, CALLBACK_ACTION],
+      [AUTH_RESOURCE, EXCHANGE_ACTION],
     ]);
   });
 });
