@@ -1,10 +1,17 @@
 import type { Context, Next } from '@nocobase/actions';
 import type { Application } from '@nocobase/server';
-import { AUTH_TYPE, DEFAULT_AUTHENTICATOR } from '../shared/constants';
+import * as oidc from 'openid-client';
+import {
+  AUTH_TYPE,
+  CALLBACK_TICKET_COOKIE_NAME,
+  DEFAULT_AUTHENTICATOR,
+  EXCHANGE_ACTION,
+  FLOW_COOKIE_NAME,
+} from '../shared/constants';
 import { buildAuthorizationRequest, handleAuthorizationCallback } from './oidc';
 import { normalizeOptions } from './options';
 import { buildFrontendCallbackUrl, sanitizeRedirectTo } from './redirect';
-import { consumeOIDCState, saveOIDCState } from './state-store';
+import { consumeCallbackTicket, consumeOIDCState, saveCallbackTicket, saveOIDCState, sha256Base64Url } from './state-store';
 
 interface AuthenticatorRecord {
   name: string;
@@ -13,8 +20,53 @@ interface AuthenticatorRecord {
   options?: unknown;
 }
 
-interface AuthResponse {
-  token: string;
+const FLOW_COOKIE_MAX_AGE_MS = 10 * 60 * 1000;
+const CALLBACK_TICKET_COOKIE_MAX_AGE_MS = 120 * 1000;
+
+function setNoStoreHeaders(ctx: Context): void {
+  ctx.set('Cache-Control', 'no-store');
+  ctx.set('Pragma', 'no-cache');
+}
+
+function flowCookieOptions(ctx: Context) {
+  return {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: ctx.secure,
+    path: '/',
+    maxAge: FLOW_COOKIE_MAX_AGE_MS,
+    overwrite: true,
+  };
+}
+
+function callbackTicketCookieOptions(ctx: Context) {
+  return {
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: ctx.secure,
+    path: '/',
+    maxAge: CALLBACK_TICKET_COOKIE_MAX_AGE_MS,
+    overwrite: true,
+  };
+}
+
+function randomSecret(): string {
+  return oidc.randomPKCECodeVerifier();
+}
+
+function getOrCreateFlowCookie(ctx: Context): string {
+  const existing = ctx.cookies.get(FLOW_COOKIE_NAME);
+  if (typeof existing === 'string' && existing.length > 0) {
+    ctx.cookies.set(FLOW_COOKIE_NAME, existing, flowCookieOptions(ctx));
+    return existing;
+  }
+  const created = randomSecret();
+  ctx.cookies.set(FLOW_COOKIE_NAME, created, flowCookieOptions(ctx));
+  return created;
+}
+
+function clearCallbackTicketCookie(ctx: Context): void {
+  ctx.cookies.set(CALLBACK_TICKET_COOKIE_NAME, '', { ...callbackTicketCookieOptions(ctx), maxAge: 0 });
 }
 
 function actionValues(ctx: Context): Record<string, unknown> {
@@ -47,11 +99,15 @@ export function registerActions(app: Application, resourceName: string) {
     name: resourceName,
     actions: {
       async getAuthUrl(ctx: Context, next: Next) {
+        setNoStoreHeaders(ctx);
         const values = actionValues(ctx);
         const authenticatorName = typeof values.authenticator === 'string' && values.authenticator.length > 0 ? values.authenticator : DEFAULT_AUTHENTICATOR;
+        const binding = typeof values.binding === 'string' && values.binding.length > 0 ? values.binding : undefined;
+        if (!binding) ctx.throw(400, 'OIDC binding is missing');
         const authenticator = await getAuthenticator(ctx, authenticatorName);
         const options = normalizeOptions(authenticator.options);
         const redirectTo = sanitizeRedirectTo(values.redirectTo);
+        const flowCookie = getOrCreateFlowCookie(ctx);
         const request = await buildAuthorizationRequest(options);
 
         await saveOIDCState(ctx.app.cache, request.state, {
@@ -59,6 +115,8 @@ export function registerActions(app: Application, resourceName: string) {
           codeVerifier: request.codeVerifier,
           nonce: request.nonce,
           redirectTo,
+          flowCookieHash: sha256Base64Url(flowCookie),
+          clientBindingHash: sha256Base64Url(binding),
           createdAt: Date.now(),
         });
 
@@ -66,10 +124,14 @@ export function registerActions(app: Application, resourceName: string) {
         await next();
       },
       async redirect(ctx: Context, next: Next) {
+        setNoStoreHeaders(ctx);
         const state = queryValue(ctx, 'state');
         if (!state) ctx.throw(400, 'OIDC state is missing');
 
         const stored = await consumeOIDCState(ctx.app, state);
+        const flowCookie = ctx.cookies.get(FLOW_COOKIE_NAME);
+        if (!flowCookie) ctx.throw(400, 'OIDC flow cookie is missing');
+        if (sha256Base64Url(flowCookie) !== stored.flowCookieHash) ctx.throw(400, 'OIDC flow cookie is invalid');
         const authenticator = await getAuthenticator(ctx, stored.authenticator);
         const options = normalizeOptions(authenticator.options);
         const callbackUrl = callbackUrlFrom(ctx, options.redirectUri);
@@ -79,10 +141,43 @@ export function registerActions(app: Application, resourceName: string) {
           codeVerifier: stored.codeVerifier,
         });
 
-        ctx.state.externalOIDCClaims = result.claims;
-        ctx.auth = await ctx.app.authManager.get(stored.authenticator, ctx);
-        const authResponse = await ctx.auth.signIn() as AuthResponse;
-        ctx.redirect(buildFrontendCallbackUrl(stored.redirectTo, stored.authenticator, authResponse.token));
+        const callbackTicket = randomSecret();
+        await saveCallbackTicket(ctx.app.cache, callbackTicket, {
+          authenticator: stored.authenticator,
+          claims: result.claims,
+          flowCookieHash: stored.flowCookieHash,
+          clientBindingHash: stored.clientBindingHash,
+          createdAt: Date.now(),
+        });
+
+        ctx.cookies.set(CALLBACK_TICKET_COOKIE_NAME, callbackTicket, callbackTicketCookieOptions(ctx));
+        ctx.redirect(buildFrontendCallbackUrl(stored.redirectTo));
+        await next();
+      },
+      async [EXCHANGE_ACTION](ctx: Context, next: Next) {
+        setNoStoreHeaders(ctx);
+        const values = actionValues(ctx);
+        const binding = typeof values.binding === 'string' && values.binding.length > 0 ? values.binding : undefined;
+        if (!binding) ctx.throw(400, 'OIDC binding is missing');
+
+        const callbackTicket = ctx.cookies.get(CALLBACK_TICKET_COOKIE_NAME);
+        clearCallbackTicketCookie(ctx);
+        if (!callbackTicket) ctx.throw(400, 'OIDC callback ticket is missing');
+
+        const flowCookie = ctx.cookies.get(FLOW_COOKIE_NAME);
+        if (!flowCookie) ctx.throw(400, 'OIDC flow cookie is missing');
+
+        const storedTicket = await consumeCallbackTicket(ctx.app, callbackTicket);
+        if (sha256Base64Url(flowCookie) !== storedTicket.flowCookieHash) ctx.throw(400, 'OIDC flow cookie is invalid');
+        if (sha256Base64Url(binding) !== storedTicket.clientBindingHash) ctx.throw(400, 'OIDC binding is invalid');
+
+        ctx.state.externalOIDCClaims = storedTicket.claims;
+        ctx.auth = await ctx.app.authManager.get(storedTicket.authenticator, ctx);
+        const authResponse = await ctx.auth.signIn() as { token: string };
+        ctx.body = {
+          authenticator: storedTicket.authenticator,
+          token: authResponse.token,
+        };
         await next();
       },
     },
