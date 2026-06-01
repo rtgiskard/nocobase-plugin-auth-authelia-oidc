@@ -27,6 +27,36 @@ export function userDataFromClaims(claims: OIDCClaims, options: ExternalOIDCOpti
   };
 }
 
+interface MutableUserProfile {
+  get?(key: string): unknown;
+  update(values: Record<string, string>): Promise<unknown>;
+  [key: string]: unknown;
+}
+
+function userValue(user: MutableUserProfile, key: string): unknown {
+  return typeof user.get === 'function' ? user.get(key) : user[key];
+}
+
+function isBlank(value: unknown): boolean {
+  return value === undefined || value === null || value === '';
+}
+
+export function missingUserDataUpdates(user: MutableUserProfile, userData: ReturnType<typeof userDataFromClaims>): Record<string, string> {
+  const updates: Record<string, string> = {};
+  for (const key of ['email', 'nickname', 'username']) {
+    const next = userData[key as keyof typeof userData];
+    if (typeof next === 'string' && next.length > 0 && isBlank(userValue(user, key))) {
+      updates[key] = next;
+    }
+  }
+  return updates;
+}
+
+async function fillMissingUserData(user: MutableUserProfile, userData: ReturnType<typeof userDataFromClaims>): Promise<void> {
+  const updates = missingUserDataUpdates(user, userData);
+  if (Object.keys(updates).length > 0) await user.update(updates);
+}
+
 export class ExternalOIDCAuth extends BaseAuth {
   constructor(config: AuthConfig) {
     const userCollection = config.ctx.db.getCollection('users');
@@ -42,13 +72,21 @@ export class ExternalOIDCAuth extends BaseAuth {
     const options = normalizeOptions(this.authenticator?.options);
     const authenticator = this.authenticator as AuthModel;
     const uuid = `${claims.iss}:${claims.sub}`;
+    const userData = userDataFromClaims(claims, options);
 
     if (options.autoSignUp === false) {
       const user = await authenticator.findUser(uuid);
       if (!user) throw new Error('User is not bound to this authenticator');
+      await fillMissingUserData(user, userData);
       return user;
     }
 
-    return authenticator.findOrCreateUser(uuid, userDataFromClaims(claims, options));
+    const user = await authenticator.findUser(uuid);
+    if (user) {
+      await fillMissingUserData(user, userData);
+      return user;
+    }
+
+    return authenticator.newUser(uuid, userData);
   }
 }
