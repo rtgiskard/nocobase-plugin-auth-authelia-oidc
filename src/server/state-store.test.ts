@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Cache } from '@nocobase/cache';
 import type { Application } from '@nocobase/server';
-import { consumeOIDCState, saveOIDCState } from './state-store';
+import { consumeCallbackTicket, consumeOIDCState, saveCallbackTicket, saveOIDCState } from './state-store';
 
 class MemoryCache {
   private values = new Map<string, unknown>();
@@ -54,6 +54,8 @@ describe('OIDC state store', () => {
       codeVerifier: 'code-verifier',
       nonce: 'nonce',
       redirectTo: '/admin',
+      flowCookieHash: 'hash-flow',
+      clientBindingHash: 'hash-binding',
       createdAt: Date.now(),
     });
 
@@ -71,6 +73,8 @@ describe('OIDC state store', () => {
       codeVerifier: 'code-verifier',
       nonce: 'nonce',
       redirectTo: '/admin',
+      flowCookieHash: 'hash-flow',
+      clientBindingHash: 'hash-binding',
       createdAt: Date.now(),
     });
 
@@ -81,5 +85,37 @@ describe('OIDC state store', () => {
 
     expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
     expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+  });
+});
+
+describe('OIDC callback ticket store', () => {
+  it('consumes saved callback ticket once', async () => {
+    const testApp = app();
+    await saveCallbackTicket(testApp.cache as Cache, 'ticket-value', {
+      authenticator: 'oidc',
+      claims: { iss: 'https://issuer.test', sub: 'user-1' },
+      flowCookieHash: 'hash-flow',
+      clientBindingHash: 'hash-binding',
+      createdAt: Date.now(),
+    });
+
+    await expect(consumeCallbackTicket(testApp, 'ticket-value')).resolves.toMatchObject({
+      authenticator: 'oidc',
+      flowCookieHash: 'hash-flow',
+      clientBindingHash: 'hash-binding',
+    });
+    await expect(consumeCallbackTicket(testApp, 'ticket-value')).rejects.toThrow('OIDC callback ticket is invalid or expired');
+  });
+
+  it('rejects wrong callback ticket', async () => {
+    const testApp = app();
+    await saveCallbackTicket(testApp.cache as Cache, 'ticket-value', {
+      authenticator: 'oidc',
+      claims: { iss: 'https://issuer.test', sub: 'user-1' },
+      flowCookieHash: 'hash-flow',
+      clientBindingHash: 'hash-binding',
+      createdAt: Date.now(),
+    });
+    await expect(consumeCallbackTicket(testApp, 'ticket-other')).rejects.toThrow('OIDC callback ticket is invalid or expired');
   });
 });
